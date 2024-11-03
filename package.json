@@ -1,0 +1,21 @@
+{
+  "name": "new_galaxy_map",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "parcel src/main.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fast-random": "^2.0.4",
+    "jscam": "^1.2.3",
+    "twgl.js": "^5.5.4"
+  },
+  "devDependencies": {
+    "@parcel/transformer-glsl": "^2.9.3"
+  }
+}

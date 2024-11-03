@@ -1,0 +1,94 @@
+* {
+    font-family: Helvetica, sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    box-sizing: border-box;
+}
+
+.viewport {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+}
+
+.ui {
+    position: fixed;
+    left: 5px;
+    top: 5px;
+}
+
+.menus {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.menu {
+    width: 200px;
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 4px;
+    padding: 4px 6px;
+}
+
+.menu:not(.active) > *:not(.title) {
+    display: none;
+}
+
+.menu.active > .title {
+    margin-bottom: 4px;
+}
+
+.menu:has(input[type="text"]:last-of-type) {
+    padding-bottom: 6px;
+}
+
+.title {
+    font-weight: bold;
+}
+
+.options {
+    padding-left: 8px;
+}
+
+input[type="radio"] {
+    opacity: 0;
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+
+input[type="radio"] + label {
+    display: block;
+    position: relative;
+    padding-left: 20px;
+    cursor: pointer;
+    user-select: none;
+}
+
+input[type="radio"] + label::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    height: calc(100% - 6px);
+    aspect-ratio: 1 / 1;
+    background: gray;
+    border-radius: 2px;
+}
+
+input[type="radio"]:checked + label::before {
+    background: dodgerblue;
+}
+
+input[type="text"] {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    border: none;
+    border-radius: 2px;
+    padding: 2px 6px;
+}
