@@ -634,7 +634,135 @@ $("#find-input").on("input", function() {
     camera.y = y;
 });
 
-},{"ade0f69571c5f125":"4w3GW","b13b125769146909":"9r4H1","6537be8d9f01f7ad":"eRuHd","6b3cef6f0788429e":"iWluM","98b1d998195ec143":"Ubz3V","b158b690a5422c07":"5m8MP"}],"4w3GW":[function(require,module,exports) {
+},{"b13b125769146909":"9r4H1","ade0f69571c5f125":"4w3GW","6b3cef6f0788429e":"iWluM","6537be8d9f01f7ad":"eRuHd","98b1d998195ec143":"Ubz3V","b158b690a5422c07":"5m8MP"}],"9r4H1":[function(require,module,exports) {
+module.exports = class {
+    constructor(target, opts){
+        this.target = target;
+        this.x = 0;
+        this.y = 0;
+        this.z = 1;
+        this.down = false;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.startX = 0;
+        this.startY = 0;
+        this.movedX = 0;
+        this.movedY = 0;
+        this.active = false;
+        this.button = 0;
+        this.minZ = 0;
+        this.maxZ = Infinity;
+        if (typeof opts === "object") {
+            if (opts.hasOwnProperty("button")) {
+                if (typeof opts.button === "number" && opts.button >= 0) this.button = opts.button;
+                else throw new TypeError("Button property must be a number and above or equal to 0");
+            }
+            if (opts.hasOwnProperty("minZ")) {
+                if (typeof opts.minZ === "number" && opts.minZ >= 0) this.minZ = opts.minZ;
+                else throw new TypeError("minZ property must be a number and above or equal to 0");
+            }
+            if (opts.hasOwnProperty("maxZ")) {
+                if (typeof opts.maxZ === "number" && opts.maxZ >= this.minZ) this.maxZ = opts.maxZ;
+                else throw new TypeError(`MaxZ property must be a number and above or equal to minZ (= ${this.minZ})`);
+            }
+        }
+        this.onMouseDown = (e)=>{
+            if (e.button === this.button) {
+                this.down = true;
+                this.startX = e.clientX;
+                this.startY = e.clientY;
+                this.offsetX = this.x;
+                this.offsetY = this.y;
+            }
+        };
+        this.onMouseMove = (e)=>{
+            if (this.down) {
+                e.preventDefault();
+                this.x = this.offsetX + (this.startX - e.clientX) * this.z;
+                this.y = this.offsetY + (this.startY - e.clientY) * this.z;
+            }
+        };
+        this.onMouseUp = (e)=>{
+            if (this.down && e.button === this.button) {
+                e.preventDefault();
+                this.down = false;
+            }
+        };
+        this.onScroll = (e)=>{
+            let oldX = (e.clientX - innerWidth / 2) * this.z;
+            let oldY = (e.clientY - innerHeight / 2) * this.z;
+            let z = e.deltaY / 1250 * this.z;
+            this.z = Math.min(Math.max(this.z + z, this.minZ), this.maxZ);
+            let newX = (e.clientX - innerWidth / 2) * this.z;
+            let newY = (e.clientY - innerHeight / 2) * this.z;
+            this.x += oldX - newX;
+            this.y += oldY - newY;
+        };
+        if (this.button === 2) this.onContextMenu = (e)=>{
+            e.preventDefault();
+        };
+        this.begin();
+    }
+    begin() {
+        this.active = true;
+        this.target.addEventListener("mousedown", this.onMouseDown);
+        this.target.addEventListener("contextmenu", this.onContextMenu);
+        this.target.addEventListener("wheel", this.onScroll);
+        window.addEventListener("mousemove", this.onMouseMove);
+        window.addEventListener("mouseup", this.onMouseUp);
+    }
+    end() {
+        this.active = false;
+        this.target.removeEventListener("mousedown", this.onMouseDown);
+        this.target.removeEventListener("contextmenu", this.onContextMenu);
+        this.target.removeEventListener("wheel", this.onScroll);
+        window.removeEventListener("mousemove", this.onMouseMove);
+        window.removeEventListener("mouseup", this.onMouseUp);
+    }
+    coordToScreenSpace(x, y) {
+        const { x: x2, y: y2 } = destruct(x, y);
+        return {
+            x: (x2 - this.x) / this.z + innerWidth / 2,
+            y: (y2 - this.y) / this.z + innerHeight / 2
+        };
+    }
+    coordToClipSpace(x, y) {
+        return this.screenSpaceToClipSpace(this.coordToScreenSpace(destruct(x, y)));
+    }
+    screenSpaceToCoord(x, y) {
+        const { x: x2, y: y2 } = destruct(x, y);
+        return {
+            x: (x2 - innerWidth / 2) * this.z + this.x,
+            y: (y2 - innerHeight / 2) * this.z + this.y
+        };
+    }
+    screenSpaceToClipSpace(x, y) {
+        const { x: x2, y: y2 } = destruct(x, y);
+        return {
+            x: x2 / innerWidth * 2 - 1,
+            y: y2 / innerHeight * 2 - 1
+        };
+    }
+    clipSpaceToCoord(x, y) {
+        return this.screenSpaceToCoord(this.clipSpaceToScreenSpace(destruct(x, y)));
+    }
+    clipSpaceToScreenSpace(x, y) {
+        const { x: x2, y: y2 } = destruct(x, y);
+        return {
+            x: (x2 + 1) / 2 * innerWidth,
+            y: (y2 + 1) / 2 * innerHeight
+        };
+    }
+};
+function destruct(x, y) {
+    if (typeof x === "object") return x;
+    return {
+        x,
+        y
+    };
+}
+
+},{}],"4w3GW":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 var _vertGlsl = require("./glsl/vert.glsl");
 var _vertGlslDefault = parcelHelpers.interopDefault(_vertGlsl);
@@ -766,7 +894,7 @@ class Renderer {
 }
 module.exports = Renderer;
 
-},{"be1852661e17b98f":"dsGPx","674b3ba806248f51":"fnVqF","./glsl/vert.glsl":"jNcaD","./glsl/frag.glsl":"6iR0A","@parcel/transformer-js/src/esmodule-helpers.js":"dOaw1","./glsl/bg-vert.glsl":"4psQR","./glsl/bg-frag.glsl":"k4Eve","c2a74270719041a0":"bvO3E"}],"dsGPx":[function(require,module,exports) {
+},{"be1852661e17b98f":"dsGPx","674b3ba806248f51":"fnVqF","c2a74270719041a0":"bvO3E","./glsl/vert.glsl":"jNcaD","./glsl/frag.glsl":"6iR0A","./glsl/bg-vert.glsl":"4psQR","./glsl/bg-frag.glsl":"k4Eve","@parcel/transformer-js/src/esmodule-helpers.js":"dOaw1"}],"dsGPx":[function(require,module,exports) {
 class Mesh {
     constructor(points = []){
         this.points = points;
@@ -11010,6 +11138,14 @@ exports.export = function(dest, destName, get) {
     });
 };
 
+},{}],"bvO3E":[function(require,module,exports) {
+const mod = {
+    getShaderType () {
+        return $(".shader-options > input:checked").attr("id");
+    }
+};
+module.exports = mod;
+
 },{}],"jNcaD":[function(require,module,exports) {
 module.exports = "precision mediump float;\n#define GLSLIFY 1\n\nattribute vec2 points;\nattribute vec2 position;\nattribute float size;\n\nuniform vec2 resolution;\nuniform vec3 camera;\n\nvarying float mass;\nvarying vec2 fragPos;\n\nvoid main() {\n    vec2 transform = points * size + position;\n\n    vec2 cameraSpace = (transform - camera.xy) / camera.z;\n\n    vec2 clipSpace = cameraSpace / resolution;\n\n    vec2 screenSpace = clipSpace * vec2(2.0, -2.0);\n\n    mass = size / 128.0;\n\n    fragPos = transform;\n\n    gl_Position = vec4(screenSpace, 0.0, 1.0);\n}";
 
@@ -11021,298 +11157,6 @@ module.exports = "precision mediump float;\n#define GLSLIFY 1\n\nattribute vec2 
 
 },{}],"k4Eve":[function(require,module,exports) {
 module.exports = "precision mediump float;\n#define GLSLIFY 1\n\nuniform float shaderType;\nuniform float lod;\n\nvarying vec2 fragPos;\n\nfloat round(float n) {\n    return floor(n + 0.5);\n}\n\nvec2 round(vec2 n) {\n    return vec2(round(n.x), round(n.y));\n}\n\nfloat rand(vec2 co) {\n    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);\n}\n\nvec3 getColorOf(float mass) {\n    vec3 color = vec3(1.0, 1.0, 1.0); \n\n    vec3 red = vec3(1.0, 0.5, 0.2);\n    vec3 yellow = vec3(1.0, 1.0, 0.6);\n    vec3 white = vec3(1.0, 1.0, 1.0);\n    vec3 blue = vec3(0.5, 0.7, 1.0);\n\n    float RED_LIM = 0.05;\n    float YELLOW_LIM = 0.075;\n    float WHITE_LIM = 0.2;\n    float BLUE_LIM = 0.4;\n\n    if (mass <= RED_LIM) {\n        color = red;\n    } else if (mass <= YELLOW_LIM) {\n        color = mix(red, yellow, (mass - RED_LIM) / (YELLOW_LIM - RED_LIM));\n    } else if (mass <= WHITE_LIM) {\n        color = mix(yellow, white, (mass - YELLOW_LIM) / (WHITE_LIM - YELLOW_LIM));\n    } else if (mass <= BLUE_LIM) {\n        color = mix(white, blue, (mass - WHITE_LIM) / (BLUE_LIM - WHITE_LIM));\n    } else {\n        color = blue;\n    }\n\n    return color;\n}\n\nvoid main() {\n    vec2 seed = mod(round(fragPos), 1000.0);\n\n    float value = (rand(seed) + rand(seed.yx)) / 2.0;\n\n    float brightness = pow(value, 5.0 - lod / 2.0);\n\n    float LOD_MIN = 0.75;\n    float LOD_MAX = 2.0;\n\n    if (lod < LOD_MIN) {\n        brightness = 0.0;\n    }\n\n    if (lod >= LOD_MIN && lod < LOD_MAX) {\n        brightness = mix(0.0, brightness, (lod - LOD_MIN) / (LOD_MAX - LOD_MIN));\n    }\n\n    if (brightness < 0.5) {\n        brightness /= 1.5;\n    }\n\n    if (brightness > 0.9 && lod >= 3.0) {\n        brightness = brightness * 2.0;\n    }\n\n    vec3 color = vec3(0.0, 0.0, 0.0);\n\n    if (shaderType == 1.0) {\n        color = getColorOf(brightness / 4.0) * brightness / 4.0;\n    } else if (shaderType == 2.0) {\n        color = vec3(brightness / 4.0);\n    } else if (shaderType == 3.0) {\n        color = vec3(fragPos.x / 999999.0, 1.0 - fragPos.x / 999999.0, 0.5 + fragPos.y / 999999.0);\n        color *= brightness / 4.0;\n    }\n \n    gl_FragColor = vec4(color, 1.0);\n}";
-
-},{}],"bvO3E":[function(require,module,exports) {
-const mod = {
-    getShaderType () {
-        return $(".shader-options > input:checked").attr("id");
-    }
-};
-module.exports = mod;
-
-},{}],"9r4H1":[function(require,module,exports) {
-module.exports = class {
-    constructor(target, opts){
-        this.target = target;
-        this.x = 0;
-        this.y = 0;
-        this.z = 1;
-        this.down = false;
-        this.offsetX = 0;
-        this.offsetY = 0;
-        this.startX = 0;
-        this.startY = 0;
-        this.movedX = 0;
-        this.movedY = 0;
-        this.active = false;
-        this.button = 0;
-        this.minZ = 0;
-        this.maxZ = Infinity;
-        if (typeof opts === "object") {
-            if (opts.hasOwnProperty("button")) {
-                if (typeof opts.button === "number" && opts.button >= 0) this.button = opts.button;
-                else throw new TypeError("Button property must be a number and above or equal to 0");
-            }
-            if (opts.hasOwnProperty("minZ")) {
-                if (typeof opts.minZ === "number" && opts.minZ >= 0) this.minZ = opts.minZ;
-                else throw new TypeError("minZ property must be a number and above or equal to 0");
-            }
-            if (opts.hasOwnProperty("maxZ")) {
-                if (typeof opts.maxZ === "number" && opts.maxZ >= this.minZ) this.maxZ = opts.maxZ;
-                else throw new TypeError(`MaxZ property must be a number and above or equal to minZ (= ${this.minZ})`);
-            }
-        }
-        this.onMouseDown = (e)=>{
-            if (e.button === this.button) {
-                this.down = true;
-                this.startX = e.clientX;
-                this.startY = e.clientY;
-                this.offsetX = this.x;
-                this.offsetY = this.y;
-            }
-        };
-        this.onMouseMove = (e)=>{
-            if (this.down) {
-                e.preventDefault();
-                this.x = this.offsetX + (this.startX - e.clientX) * this.z;
-                this.y = this.offsetY + (this.startY - e.clientY) * this.z;
-            }
-        };
-        this.onMouseUp = (e)=>{
-            if (this.down && e.button === this.button) {
-                e.preventDefault();
-                this.down = false;
-            }
-        };
-        this.onScroll = (e)=>{
-            let oldX = (e.clientX - innerWidth / 2) * this.z;
-            let oldY = (e.clientY - innerHeight / 2) * this.z;
-            let z = e.deltaY / 1250 * this.z;
-            this.z = Math.min(Math.max(this.z + z, this.minZ), this.maxZ);
-            let newX = (e.clientX - innerWidth / 2) * this.z;
-            let newY = (e.clientY - innerHeight / 2) * this.z;
-            this.x += oldX - newX;
-            this.y += oldY - newY;
-        };
-        if (this.button === 2) this.onContextMenu = (e)=>{
-            e.preventDefault();
-        };
-        this.begin();
-    }
-    begin() {
-        this.active = true;
-        this.target.addEventListener("mousedown", this.onMouseDown);
-        this.target.addEventListener("contextmenu", this.onContextMenu);
-        this.target.addEventListener("wheel", this.onScroll);
-        window.addEventListener("mousemove", this.onMouseMove);
-        window.addEventListener("mouseup", this.onMouseUp);
-    }
-    end() {
-        this.active = false;
-        this.target.removeEventListener("mousedown", this.onMouseDown);
-        this.target.removeEventListener("contextmenu", this.onContextMenu);
-        this.target.removeEventListener("wheel", this.onScroll);
-        window.removeEventListener("mousemove", this.onMouseMove);
-        window.removeEventListener("mouseup", this.onMouseUp);
-    }
-    coordToScreenSpace(x, y) {
-        const { x: x2, y: y2 } = destruct(x, y);
-        return {
-            x: (x2 - this.x) / this.z + innerWidth / 2,
-            y: (y2 - this.y) / this.z + innerHeight / 2
-        };
-    }
-    coordToClipSpace(x, y) {
-        return this.screenSpaceToClipSpace(this.coordToScreenSpace(destruct(x, y)));
-    }
-    screenSpaceToCoord(x, y) {
-        const { x: x2, y: y2 } = destruct(x, y);
-        return {
-            x: (x2 - innerWidth / 2) * this.z + this.x,
-            y: (y2 - innerHeight / 2) * this.z + this.y
-        };
-    }
-    screenSpaceToClipSpace(x, y) {
-        const { x: x2, y: y2 } = destruct(x, y);
-        return {
-            x: x2 / innerWidth * 2 - 1,
-            y: y2 / innerHeight * 2 - 1
-        };
-    }
-    clipSpaceToCoord(x, y) {
-        return this.screenSpaceToCoord(this.clipSpaceToScreenSpace(destruct(x, y)));
-    }
-    clipSpaceToScreenSpace(x, y) {
-        const { x: x2, y: y2 } = destruct(x, y);
-        return {
-            x: (x2 + 1) / 2 * innerWidth,
-            y: (y2 + 1) / 2 * innerHeight
-        };
-    }
-};
-function destruct(x, y) {
-    if (typeof x === "object") return x;
-    return {
-        x,
-        y
-    };
-}
-
-},{}],"eRuHd":[function(require,module,exports) {
-const data = require("3be4c73d2c238292");
-const FastRandom = require("dd3bb666d70b990c");
-const MAX_LOD = data.MAX_LOD;
-const MIN_SIZE_EXP = 8;
-let iter = 0;
-const mod = {
-    generateViewportStars (camera) {
-        let exactLodLevel = Math.max(0, Math.log2(camera.z / 10));
-        let minLodLevel = Math.max(0, Math.floor(exactLodLevel));
-        data.setLodLevel(exactLodLevel);
-        for(let lodLevel = 0; lodLevel < MAX_LOD; ++lodLevel)if (lodLevel < MAX_LOD - minLodLevel) this.generateViewportStarsLOD(camera, lodLevel);
-        else {
-            // If outside of LOD then delete all
-            const starData = data.getStarLOD(lodLevel);
-            data.spliceStars(lodLevel, 0, starData.width() * starData.height());
-            starData.start.x = 0;
-            starData.start.y = 0;
-            starData.end.x = 0;
-            starData.end.y = 0;
-        }
-    },
-    generateViewportStarsLOD (camera, lodLevel) {
-        const gridSize = 2 ** (MAX_LOD - lodLevel + MIN_SIZE_EXP);
-        const starData = data.getStarLOD(lodLevel);
-        const { x: minX, y: minY } = camera.screenSpaceToCoord(0, 0);
-        const { x: maxX, y: maxY } = camera.screenSpaceToCoord(innerWidth, innerHeight);
-        const left = Math.floor(minX / gridSize);
-        const right = Math.ceil(maxX / gridSize);
-        const top = Math.ceil(maxY / gridSize);
-        const bottom = Math.floor(minY / gridSize);
-        const start = starData.start;
-        const end = starData.end;
-        if (top < start.y || bottom > end.y || left > end.x || right < start.x || starData.width() === 0 || starData.height() === 0) {
-            const newStars = this.generateGrid(lodLevel, left, right, bottom, top);
-            data.spliceStars(lodLevel, 0, starData.width() * starData.height(), newStars);
-            start.x = left;
-            start.y = bottom;
-            end.x = right;
-            end.y = top;
-            return;
-        }
-        if (top < end.y) // If top is under old top, then shave off those rows
-        data.removeStarRows(lodLevel, starData.height() - (end.y - top), end.y - top);
-        else if (top > end.y) {
-            const newStars = this.generateGrid(lodLevel, start.x, end.x, end.y, top);
-            data.addStarRows(lodLevel, starData.height(), newStars);
-        }
-        end.y = top;
-        if (bottom > start.y) // If bottom is over old bottom, then shave off those rows
-        data.removeStarRows(lodLevel, 0, bottom - start.y);
-        else if (bottom < start.y) {
-            const newStars = this.generateGrid(lodLevel, start.x, end.x, bottom, start.y);
-            data.addStarRows(lodLevel, 0, newStars);
-        }
-        start.y = bottom;
-        if (left > start.x) data.removeStarColumns(lodLevel, 0, left - start.x);
-        else if (left < start.x) {
-            const newStars = this.generateGrid(lodLevel, left, start.x, start.y, end.y);
-            data.addStarColumns(lodLevel, 0, newStars);
-        }
-        start.x = left;
-        if (right < end.x) data.removeStarColumns(lodLevel, starData.width() - (end.x - right), end.x - right);
-        else if (right > end.x) {
-            const newStars = this.generateGrid(lodLevel, end.x, right, start.y, end.y);
-            data.addStarColumns(lodLevel, starData.width(), newStars);
-        }
-        end.x = right;
-    },
-    generateGrid (lodLevel, startX, endX, startY, endY) {
-        const size = (endX - startX) * (endY - startY) * lodLevel * 2;
-        let newStars = new Array(size);
-        let index = 0;
-        for(let x = startX; x < endX; ++x)for(let y = startY; y < endY; ++y){
-            const stars = this.generateStarsInGrid(lodLevel, x, y);
-            for(let i = 0; i < stars.length; ++i)newStars[index++] = stars[i];
-        }
-        return newStars;
-    },
-    generateStarsInGrid (lodLevel, x, y) {
-        const size = lodLevel * 2;
-        const gridSize = 2 ** (MAX_LOD - lodLevel + MIN_SIZE_EXP);
-        const stars = new Array(size);
-        const seed = gridSize + (y * 999 + x);
-        const rng = FastRandom(seed);
-        for(let i = 0; i < size; ++i){
-            const starX = (rng.nextFloat() + x) * gridSize;
-            const starY = (rng.nextFloat() + y) * gridSize;
-            const starSize = (rng.nextFloat() * gridSize + gridSize) / 2 ** MIN_SIZE_EXP;
-            stars[i] = {
-                position: [
-                    starX,
-                    starY
-                ],
-                size: starSize
-            };
-        }
-        return stars;
-    },
-    getStarAtCoord (x, y) {
-        const positions = data.data.starRenderData.position.data;
-        const sizes = data.data.starRenderData.size.data;
-        for(let i = 0; i < sizes.length; ++i){
-            const star = {
-                x: positions[i * 2],
-                y: positions[i * 2 + 1],
-                size: sizes[i]
-            };
-            const distance = Math.sqrt((x - star.x) ** 2 + (y - star.y) ** 2);
-            if (distance < star.size) return star;
-        }
-        return null;
-    },
-    coordToId (x, y) {
-        x = Number((x / 100).toFixed(1));
-        y = Number((y / 100).toFixed(1));
-        console.log(x, y);
-        // Apply Cantor pairing function to x and y
-        let uniqueInt = (x + y) * (x + y + 1) / 2 + y;
-        // Convert the unique integer to base-36 (or any base)
-        return uniqueInt.toString(36).replace(".", "-") // Converts to base-36 string (0-9, a-z)
-        ;
-    },
-    IdToCoord (id) {
-        const n = parseInt(id.replace("-", "."), 36);
-        let t = Math.floor((Math.sqrt(1 + 8 * n) - 1) / 2);
-        let y = (n - t * (t + 1) / 2) * 100;
-        let x = (t - y) * 100;
-        return {
-            x,
-            y
-        };
-    }
-};
-module.exports = mod;
-
-},{"dd3bb666d70b990c":"b0PU4","3be4c73d2c238292":"iWluM"}],"b0PU4":[function(require,module,exports) {
-function random(seed) {
-    function _seed(s) {
-        if ((seed = (s | 0) % 2147483647) <= 0) seed += 2147483646;
-    }
-    function _nextInt() {
-        return seed = seed * 48271 % 2147483647;
-    }
-    function _nextFloat() {
-        return (_nextInt() - 1) / 2147483646;
-    }
-    _seed(seed);
-    return {
-        seed: _seed,
-        nextInt: _nextInt,
-        nextFloat: _nextFloat
-    };
-}
-module.exports = random;
 
 },{}],"iWluM":[function(require,module,exports) {
 const Mesh = require("fcc0638965b1973c");
@@ -11469,7 +11313,163 @@ const mod = {
 };
 module.exports = mod;
 
-},{"fcc0638965b1973c":"dsGPx"}],"Ubz3V":[function(require,module,exports) {
+},{"fcc0638965b1973c":"dsGPx"}],"eRuHd":[function(require,module,exports) {
+const data = require("3be4c73d2c238292");
+const FastRandom = require("dd3bb666d70b990c");
+const MAX_LOD = data.MAX_LOD;
+const MIN_SIZE_EXP = 8;
+let iter = 0;
+const mod = {
+    generateViewportStars (camera) {
+        let exactLodLevel = Math.max(0, Math.log2(camera.z / 10));
+        let minLodLevel = Math.max(0, Math.floor(exactLodLevel));
+        data.setLodLevel(exactLodLevel);
+        for(let lodLevel = 0; lodLevel < MAX_LOD; ++lodLevel)if (lodLevel < MAX_LOD - minLodLevel) this.generateViewportStarsLOD(camera, lodLevel);
+        else {
+            // If outside of LOD then delete all
+            const starData = data.getStarLOD(lodLevel);
+            data.spliceStars(lodLevel, 0, starData.width() * starData.height());
+            starData.start.x = 0;
+            starData.start.y = 0;
+            starData.end.x = 0;
+            starData.end.y = 0;
+        }
+    },
+    generateViewportStarsLOD (camera, lodLevel) {
+        const gridSize = 2 ** (MAX_LOD - lodLevel + MIN_SIZE_EXP);
+        const starData = data.getStarLOD(lodLevel);
+        const { x: minX, y: minY } = camera.screenSpaceToCoord(0, 0);
+        const { x: maxX, y: maxY } = camera.screenSpaceToCoord(innerWidth, innerHeight);
+        const left = Math.floor(minX / gridSize);
+        const right = Math.ceil(maxX / gridSize);
+        const top = Math.ceil(maxY / gridSize);
+        const bottom = Math.floor(minY / gridSize);
+        const start = starData.start;
+        const end = starData.end;
+        if (top < start.y || bottom > end.y || left > end.x || right < start.x || starData.width() === 0 || starData.height() === 0) {
+            const newStars = this.generateGrid(lodLevel, left, right, bottom, top);
+            data.spliceStars(lodLevel, 0, starData.width() * starData.height(), newStars);
+            start.x = left;
+            start.y = bottom;
+            end.x = right;
+            end.y = top;
+            return;
+        }
+        if (top < end.y) // If top is under old top, then shave off those rows
+        data.removeStarRows(lodLevel, starData.height() - (end.y - top), end.y - top);
+        else if (top > end.y) {
+            const newStars = this.generateGrid(lodLevel, start.x, end.x, end.y, top);
+            data.addStarRows(lodLevel, starData.height(), newStars);
+        }
+        end.y = top;
+        if (bottom > start.y) // If bottom is over old bottom, then shave off those rows
+        data.removeStarRows(lodLevel, 0, bottom - start.y);
+        else if (bottom < start.y) {
+            const newStars = this.generateGrid(lodLevel, start.x, end.x, bottom, start.y);
+            data.addStarRows(lodLevel, 0, newStars);
+        }
+        start.y = bottom;
+        if (left > start.x) data.removeStarColumns(lodLevel, 0, left - start.x);
+        else if (left < start.x) {
+            const newStars = this.generateGrid(lodLevel, left, start.x, start.y, end.y);
+            data.addStarColumns(lodLevel, 0, newStars);
+        }
+        start.x = left;
+        if (right < end.x) data.removeStarColumns(lodLevel, starData.width() - (end.x - right), end.x - right);
+        else if (right > end.x) {
+            const newStars = this.generateGrid(lodLevel, end.x, right, start.y, end.y);
+            data.addStarColumns(lodLevel, starData.width(), newStars);
+        }
+        end.x = right;
+    },
+    generateGrid (lodLevel, startX, endX, startY, endY) {
+        const size = (endX - startX) * (endY - startY) * lodLevel * 2;
+        let newStars = new Array(size);
+        let index = 0;
+        for(let x = startX; x < endX; ++x)for(let y = startY; y < endY; ++y){
+            const stars = this.generateStarsInGrid(lodLevel, x, y);
+            for(let i = 0; i < stars.length; ++i)newStars[index++] = stars[i];
+        }
+        return newStars;
+    },
+    generateStarsInGrid (lodLevel, x, y) {
+        const size = lodLevel * 2;
+        const gridSize = 2 ** (MAX_LOD - lodLevel + MIN_SIZE_EXP);
+        const stars = new Array(size);
+        const seed = gridSize + (y * 999 + x);
+        const rng = FastRandom(seed);
+        for(let i = 0; i < size; ++i){
+            const starX = (rng.nextFloat() + x) * gridSize;
+            const starY = (rng.nextFloat() + y) * gridSize;
+            const starSize = (rng.nextFloat() * gridSize + gridSize) / 2 ** MIN_SIZE_EXP;
+            stars[i] = {
+                position: [
+                    starX,
+                    starY
+                ],
+                size: starSize
+            };
+        }
+        return stars;
+    },
+    getStarAtCoord (x, y) {
+        const positions = data.data.starRenderData.position.data;
+        const sizes = data.data.starRenderData.size.data;
+        for(let i = 0; i < sizes.length; ++i){
+            const star = {
+                x: positions[i * 2],
+                y: positions[i * 2 + 1],
+                size: sizes[i]
+            };
+            const distance = Math.sqrt((x - star.x) ** 2 + (y - star.y) ** 2);
+            if (distance < star.size) return star;
+        }
+        return null;
+    },
+    coordToId (x, y) {
+        x = Number((x / 100).toFixed(1));
+        y = Number((y / 100).toFixed(1));
+        console.log(x, y);
+        // Apply Cantor pairing function to x and y
+        let uniqueInt = (x + y) * (x + y + 1) / 2 + y;
+        // Convert the unique integer to base-36 (or any base)
+        return uniqueInt.toString(36).replace(".", "-") // Converts to base-36 string (0-9, a-z)
+        ;
+    },
+    IdToCoord (id) {
+        const n = parseInt(id.replace("-", "."), 36);
+        let t = Math.floor((Math.sqrt(1 + 8 * n) - 1) / 2);
+        let y = (n - t * (t + 1) / 2) * 100;
+        let x = (t - y) * 100;
+        return {
+            x,
+            y
+        };
+    }
+};
+module.exports = mod;
+
+},{"3be4c73d2c238292":"iWluM","dd3bb666d70b990c":"b0PU4"}],"b0PU4":[function(require,module,exports) {
+function random(seed) {
+    function _seed(s) {
+        if ((seed = (s | 0) % 2147483647) <= 0) seed += 2147483646;
+    }
+    function _nextInt() {
+        return seed = seed * 48271 % 2147483647;
+    }
+    function _nextFloat() {
+        return (_nextInt() - 1) / 2147483646;
+    }
+    _seed(seed);
+    return {
+        seed: _seed,
+        nextInt: _nextInt,
+        nextFloat: _nextFloat
+    };
+}
+module.exports = random;
+
+},{}],"Ubz3V":[function(require,module,exports) {
 const mod = {
     setStat (name, value) {
         $(`.${name}`).text(value);
@@ -11501,4 +11501,4 @@ module.exports = Timer;
 
 },{}]},["bw5Vs","kmm5F"], "kmm5F", "parcelRequire37e9")
 
-//# sourceMappingURL=main.3d913eea.js.map
+//# sourceMappingURL=index.3d913eea.js.map

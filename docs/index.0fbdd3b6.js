@@ -142,13 +142,13 @@
       this[globalName] = mainExports;
     }
   }
-})({"3wy5Z":[function(require,module,exports) {
+})({"bAkUw":[function(require,module,exports) {
 var global = arguments[3];
 var HMR_HOST = null;
 var HMR_PORT = null;
 var HMR_SECURE = false;
 var HMR_ENV_HASH = "d6ea1d42532a7575";
-module.bundle.HMR_BUNDLE_ID = "4fe2e931911628e1";
+module.bundle.HMR_BUNDLE_ID = "d165c6660fbdd3b6";
 "use strict";
 /* global HMR_HOST, HMR_PORT, HMR_ENV_HASH, HMR_SECURE, chrome, browser, __parcel__import__, __parcel__importScripts__, ServiceWorkerGlobalScope */ /*::
 import type {
@@ -573,22 +573,25 @@ function hmrAccept(bundle /*: ParcelRequire */ , id /*: string */ ) {
     });
 }
 
-},{}],"j4Srk":[function(require,module,exports) {
-let activeStat = null;
+},{}],"dWSpv":[function(require,module,exports) {
+/*let activeStat = null
+
 $(".menus").children().on("click", function() {
-    if (activeStat) activeStat.removeClass("active");
+    if (activeStat) {
+        activeStat.removeClass("active")
+    }
+
     if (activeStat != $(this)) {
-        $(this).addClass("active");
-        activeStat = $(this);
+        $(this).addClass("active")
+        activeStat = $(this)
     }
+})*/ $(".menu").on("click", function() {
+    $(this).toggleClass("active");
 });
-const mod = {
-    setStat (name, value) {
-        $(`.${name}`).textContent = value;
-    }
-};
-module.exports = mod;
+$(".menu > *:not(.title)").on("click", function(event) {
+    event.stopPropagation();
+});
 
-},{}]},["3wy5Z","j4Srk"], "j4Srk", "parcelRequire37e9")
+},{}]},["bAkUw","dWSpv"], "dWSpv", "parcelRequire37e9")
 
-//# sourceMappingURL=main.911628e1.js.map
+//# sourceMappingURL=index.0fbdd3b6.js.map
